@@ -1,28 +1,6 @@
 import { ref, computed, type Ref, watch, reactive } from 'vue'
 import { defineStore } from 'pinia'
-import placeHolderImage from '../assets/iiif.png'
-
-
-function debounce<F extends Function>(
-  callback: F,
-  wait: number,
-  immediate = false,
-): (...args: any) => void {
-  let timeout: any;
-  const callable = (...args: any) => {
-    const later = () => {
-      timeout = null;
-      if (!immediate) callback.apply(callable, args);
-    };
-    const callNow = immediate && !timeout;
-    clearTimeout(timeout);
-    timeout = setTimeout(later, wait);
-    if (callNow) callback.apply(callable, args);
-  };
-  return callable;
-}
-
-export default debounce;
+import debounce from '@/debounce/debounce'
 
 export const iiifImageStore = defineStore('iiifimage', () => {
   const infoJsonUrl = ref('https://stadsarchiefamsterdam.memorix.io/resources/records/media/853c6e2f-3124-bd11-f84c-0f9b5f373cad/iiif/3/18920424/info.json')
@@ -53,6 +31,7 @@ export const iiifImageStore = defineStore('iiifimage', () => {
   function setMessage(msg:string, type='info') {
     message.value = msg
     messageType.value = type
+    setTimeout(() => message.value = '', 2000);
   }
 
   const loadIiifImageJson = debounce((url:string) => {
@@ -99,13 +78,14 @@ export const iiifImageStore = defineStore('iiifimage', () => {
     setMessage('')
     infoJson.value = {}
     qualities.value = ['default']
+    preferedSizes.value = ['250,250']
   }
 
   watch(iiifParams, (currentValue, oldValue) => {
     getImageUrl()
   })
 
-  function getImageUrl() {
+  const getImageUrl = debounce((url:string) => {
       imageLoaded.value = false
       let currentSize = iiifParams.size
       if(iiifParams.maintainAspectRatio === true) {
@@ -130,22 +110,21 @@ export const iiifImageStore = defineStore('iiifimage', () => {
       }
 
       image.onload = function () {
-        setMessage('image loaded', 'info')
         imageLoaded.value = true
       }
       image.src = imgSrc
       iiifImageUrl.value = image.src
-  }
+  }, 700)
 
   loadIiifImageJson(infoJsonUrl.value)
 
   function copyImageUrl() {
     navigator.clipboard.writeText(iiifImageUrl.value).then(function() {
-      console.log('Copied!');
+      setMessage('url copied to clipboard')
     }, function() {
-      console.log('Copy error')
+      setMessage('url copied to clipboard failed', 'error')
     });
   }
 
-  return { placeHolderImage,imageLoaded, maxWidth, maxHeight, iiifParams, infoJsonUrl, iiifImageUrl, qualities, loadIiifImageJson, message, messageType, preferedSizes, formats, copyImageUrl}
+  return { imageLoaded, maxWidth, maxHeight, iiifParams, infoJsonUrl, iiifImageUrl, qualities, loadIiifImageJson, message, messageType, preferedSizes, formats, copyImageUrl}
 })

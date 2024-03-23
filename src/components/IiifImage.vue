@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { iiifImageStore } from '../stores/iiifimage'
+import placeHolderImage from '../assets/iiif.png'
 
 const iiifImage = iiifImageStore()
 
@@ -7,13 +8,11 @@ const iiifImage = iiifImageStore()
 
 <template>
   <h1>IIIF Image Api Possibilities</h1>
-  <div :class="iiifImage.messageType">
-    {{ iiifImage.message }} {{ iiifImage.imageLoaded }}
-  </div>
   <div class="container">
     <div class="settings">
       <div class="setting">
         <h3>Region</h3>
+        <input v-model="iiifImage.iiifParams.region">
       </div>
       <div class="setting size">
         <h3>Size ({{ iiifImage.iiifParams.size }}) </h3>
@@ -58,8 +57,13 @@ const iiifImage = iiifImageStore()
         <input v-model="iiifImage.infoJsonUrl" @input=" event => iiifImage.loadIiifImageJson(event?.target?.value)" placeholder="iiif image url" />
       </div>
       <div class="preview checkered">
+        <Transition appear>
+        <div v-if="iiifImage.message" class="message" :class="iiifImage.messageType">
+          {{ iiifImage.message }}
+        </div>
+        </Transition>
         <img v-if="iiifImage.imageLoaded" :src="iiifImage.iiifImageUrl" />
-        <img class="notloadedimage" v-else :src="iiifImage.placeHolderImage" />
+        <img class="notloadedimage" v-else :src="placeHolderImage" />
       </div>
       <div class="imagurl">
         {{ iiifImage.iiifImageUrl }}
@@ -131,6 +135,22 @@ const iiifImage = iiifImageStore()
     width:10%
   }
   overflow: hidden;
+  position: relative;
+  .message {
+    position: absolute;
+    top: 0;
+    margin: 1em;
+    padding: 1em;
+    color: white;
+    font-weight: bold;
+    border-radius: 1em;
+  }
+  .info {
+    background-color: cornflowerblue;
+  }
+  .error {
+    background-color: darkred;
+  }
 }
 .checkered {
   background-image:
@@ -144,4 +164,14 @@ const iiifImage = iiifImageStore()
 .imagurl {
   text-overflow: ellipsis;
 }
+.v-enter-active,
+.v-leave-active {
+  transition: opacity 1.5s ease;
+}
+
+.v-enter-from,
+.v-leave-to {
+  opacity: 0;
+}
+
 </style>
