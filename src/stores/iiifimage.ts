@@ -3,8 +3,14 @@ import { defineStore } from 'pinia'
 import debounce from '@/debounce/debounce'
 
 export const iiifImageStore = defineStore('iiifimage', () => {
-  const infoJsonUrl = ref('https://stadsarchiefamsterdam.memorix.io/resources/records/media/853c6e2f-3124-bd11-f84c-0f9b5f373cad/iiif/3/18920424/info.json')
-  const infoJson = ref({})
+  const infoJsonUrl = ref('https://images.memorix.nl/pdp/iiif/8c9832d2-785a-f652-ac68-49f6c9aacbb1/info.json')
+  //const infoJsonUrl = ref('https://stadsarchiefamsterdam.memorix.io/resources/records/media/853c6e2f-3124-bd11-f84c-0f9b5f373cad/iiif/3/18920424/info.json')
+  
+  //this is where the info.json is stored, @todo make types of different versions  
+  const infoJson = ref({
+    '@context':''
+  })
+
   const iiifImageUrl = ref('')
   const maxWidth = ref(0)
   const maxHeight= ref(0)
@@ -39,6 +45,7 @@ export const iiifImageStore = defineStore('iiifimage', () => {
     infoJsonUrl.value = url
 
     fetch(infoJsonUrl.value)
+
       .then((response) => {
         if (response.ok) {
           return response.json();
@@ -54,7 +61,8 @@ export const iiifImageStore = defineStore('iiifimage', () => {
         if(data.sizes && data.sizes.length > 0) {
           data.sizes.forEach(function(value:any) {
             const sizeOption:string = value.width + ',' + value.height
-            preferedSizes.value.push(sizeOption)
+            //sometimes sizes appear more then once for instans in https://stacks.stanford.edu/image/iiif/hg676jb4964%2F0380_796-44/info.json
+            preferedSizes.value.indexOf(sizeOption) === -1 ? preferedSizes.value.push(sizeOption) : false
           })
         }
         if(data.extraFormats && data.extraFormats.length > 0) {
@@ -67,6 +75,8 @@ export const iiifImageStore = defineStore('iiifimage', () => {
           maxHeight.value = data.height
         }
 
+        setMessage('iiif image json loaded, detected version:' + getInfoVersion())
+
         getImageUrl()
     }).catch(error => {
       reset()
@@ -76,16 +86,43 @@ export const iiifImageStore = defineStore('iiifimage', () => {
 
   function reset() {
     setMessage('')
-    infoJson.value = {}
+    infoJson.value = {
+      '@context':''
+    }
     qualities.value = ['default']
     preferedSizes.value = ['250,250']
   }
 
-  watch(iiifParams, (currentValue, oldValue) => {
+  function getInfoVersion() {
+
+    // "http://library.stanford.edu/iiif/image-api/1.0/context.json" → Version 1.0
+    // "http://iiif.io/api/image/2/context.json" → Version 2.0
+    // "http://iiif.io/api/image/3/context.json" → Version 3.0
+
+    let version = 'unknown version'
+    switch(infoJson.value['@context']) {
+      case 'http://library.stanford.edu/iiif/image-api/1.0/context.json': { 
+        version = '1.0'
+        break; 
+      }
+      case 'http://iiif.io/api/image/2/context.json': { 
+        version = '2.0'
+        break; 
+      }
+      case 'http://iiif.io/api/image/3/context.json': { 
+        version = '3.0'
+        break; 
+      }
+     } 
+
+    return version
+  }
+
+  watch(iiifParams, () => {
     getImageUrl()
   })
 
-  const getImageUrl = debounce((url:string) => {
+const getImageUrl = debounce(() => {
       imageLoaded.value = false
       let currentSize = iiifParams.size
       if(iiifParams.maintainAspectRatio === true) {
@@ -126,5 +163,5 @@ export const iiifImageStore = defineStore('iiifimage', () => {
     });
   }
 
-  return { imageLoaded, maxWidth, maxHeight, iiifParams, infoJsonUrl, iiifImageUrl, qualities, loadIiifImageJson, message, messageType, preferedSizes, formats, copyImageUrl}
+  return { imageLoaded, maxWidth, maxHeight, iiifParams, infoJsonUrl, iiifImageUrl, qualities, loadIiifImageJson, message, messageType, preferedSizes, formats, copyImageUrl, getInfoVersion}
 })

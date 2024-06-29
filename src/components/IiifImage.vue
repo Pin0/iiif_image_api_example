@@ -7,26 +7,26 @@ const iiifImage = iiifImageStore()
 </script>
 
 <template>
-  <h1>IIIF Image Api Possibilities</h1>
+  <h1><img :src="placeHolderImage" class="iiif-logo-header" /> Image Api Possibilities</h1>
   <div class="container">
     <div class="settings">
       <div class="setting">
         <h3>Region</h3>
-        <input v-model="iiifImage.iiifParams.region">
+        <input v-model="iiifImage.iiifParams.region" name="region" autocomplete="region">
       </div>
       <div class="setting size">
         <h3>Size ({{ iiifImage.iiifParams.size }}) </h3>
         <div>
-          <label>Preferred size</label>
-          <select v-model="iiifImage.iiifParams.size">
-            <option v-for="size in iiifImage.preferedSizes" :value="size">
+          <label for="prefered-size">Preferred size</label>
+          <select v-model="iiifImage.iiifParams.size" id="prefered-size">
+            <option v-for="size in iiifImage.preferedSizes" :key="size">
               {{ size }}
             </option>
           </select>
         </div>
         <div>
-          <label>Aspect ratio</label>
-          <input type="checkbox" v-model="iiifImage.iiifParams.maintainAspectRatio" />
+          <label for="aspect-ratio">Aspect ratio</label>
+          <input type="checkbox" id="aspect-ratio" v-model="iiifImage.iiifParams.maintainAspectRatio" />
         </div>
       </div>
       <div class="setting">
@@ -38,23 +38,23 @@ const iiifImage = iiifImageStore()
       <div class="setting">
         <h3>Quality</h3>
         <ul class="quality">
-          <li v-for="(quality, index) in iiifImage.qualities">
-            <input type="radio" :id="index" v-model="iiifImage.iiifParams.quality" :value="quality" /> {{ quality}}
+          <li v-for="(quality, index) in iiifImage.qualities" :key="index">
+            <input type="radio" :id="quality" v-model="iiifImage.iiifParams.quality" :value="quality" /> {{ quality}}
           </li>
         </ul>
       </div>
       <div class="setting">
         <h3>Format</h3>
         <ul class="quality">
-          <li v-for="(format, index) in iiifImage.formats">
-            <input type="radio" :disabled="format == 'tif'" :id="index" v-model="iiifImage.iiifParams.format" :value="format" /> {{ format }}
+          <li v-for="(format, index) in iiifImage.formats" :key="index">
+            <input type="radio" :disabled="format == 'tif'" :id="format" v-model="iiifImage.iiifParams.format" :value="format" /> {{ format }}
           </li>
         </ul>
       </div>
     </div>
     <div class="workarea">
       <div class="urlinput">
-        <input v-model="iiifImage.infoJsonUrl" @input=" event => iiifImage.loadIiifImageJson(event?.target?.value)" placeholder="iiif image url" />
+        <input id="iiif-image-url" v-model="iiifImage.infoJsonUrl" @input=" event => iiifImage.loadIiifImageJson(event?.target?.value)" placeholder="iiif image url" />
       </div>
       <div class="preview checkered">
         <Transition appear>
@@ -74,6 +74,9 @@ const iiifImage = iiifImageStore()
 </template>
 
 <style scoped>
+h1{
+  padding: 0.3em;
+}
 .container {
   display: flex;
   flex-direction: row;
@@ -173,5 +176,7 @@ const iiifImage = iiifImageStore()
 .v-leave-to {
   opacity: 0;
 }
-
+.iiif-logo-header {
+  width: 2%;
+}
 </style>
