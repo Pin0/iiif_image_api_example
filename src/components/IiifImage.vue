@@ -1,13 +1,38 @@
 <script setup lang="ts">
 import { iiifImageStore } from '../stores/iiifimage'
 import placeHolderImage from '../assets/iiif.png'
+import { useRoute } from 'vue-router';
+import { onMounted, watch } from 'vue';
 
-const iiifImage = iiifImageStore()
+
+const route = useRoute();
+const iiifImage = iiifImageStore();
+
+// Set the URL when the component is mounted
+onMounted(() => {
+ //iiifImage.loadIiifImageJson('https://images.memorix.nl/pdp/iiif/8c9832d2-785a-f652-ac68-49f6c9aacbb1/info.json');
+
+  //iiifImage.loadIiifImageJson(route.params.url as string);
+  
+});
+
+// Watch for route changes and update the store
+watch(
+  () => route.params.url,
+  (newUrl) => {
+    iiifImage.loadIiifImageJson(newUrl as string);
+  }
+);
+
 
 </script>
 
 <template>
   <h1><img :src="placeHolderImage" class="iiif-logo-header" /> Image Api Possibilities</h1>
+  <router-link to="/https://images.memorix.nl/pdp/iiif/8c9832d2-785a-f652-ac68-49f6c9aacbb1/info.json">Example 1</router-link>
+  <router-link to="/https://stacks.stanford.edu/image/iiif/hg676jb4964%2F0380_796-44/info.json">Example 2</router-link>
+<router-link to="/https://stadsarchiefamsterdam.memorix.io/resources/records/media/e667a5ea-e7fc-a197-1380-f35dfaa51466/iiif/3/23989087/info.json">Example 3</router-link>
+
   <div class="container">
     <div class="settings">
       <div class="setting">
@@ -51,6 +76,9 @@ const iiifImage = iiifImageStore()
           </li>
         </ul>
       </div>
+      <div class="setting scroll">
+        <pre>{{ iiifImage.infoJson }}</pre>
+      </div>
     </div>
     <div class="workarea">
       <div class="urlinput">
@@ -80,7 +108,6 @@ h1{
 .container {
   display: flex;
   flex-direction: row;
-  //flex-wrap: wrap;
   height: calc(100vh - 100px);
 }
 .settings {
@@ -178,5 +205,8 @@ h1{
 }
 .iiif-logo-header {
   width: 2%;
+}
+.scroll {
+  overflow: scroll;
 }
 </style>

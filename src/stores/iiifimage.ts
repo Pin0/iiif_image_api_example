@@ -1,11 +1,25 @@
-import { ref, computed, type Ref, watch, reactive } from 'vue'
+import { ref, type Ref, watch, reactive } from 'vue'
 import { defineStore } from 'pinia'
 import debounce from '@/debounce/debounce'
+import { useRouter } from 'vue-router';
+import { isEmptyStatement } from 'typescript';
 
 export const iiifImageStore = defineStore('iiifimage', () => {
-  const infoJsonUrl = ref('https://images.memorix.nl/pdp/iiif/8c9832d2-785a-f652-ac68-49f6c9aacbb1/info.json')
-  //const infoJsonUrl = ref('https://stadsarchiefamsterdam.memorix.io/resources/records/media/853c6e2f-3124-bd11-f84c-0f9b5f373cad/iiif/3/18920424/info.json')
   
+   //const defaultIiifJsonUrl = 'https://images.memorix.nl/pdp/iiif/8c9832d2-785a-f652-ac68-49f6c9aacbb1/info.json'
+
+  // const router = useRouter()
+
+  // router.push({ name: 'home', params: { url: defaultIiifJsonUrl } })
+
+
+  const infoJsonUrl = ref('https://images.memorix.nl/pdp/iiif/8c9832d2-785a-f652-ac68-49f6c9aacbb1/info.json')
+  // //const infoJsonUrl = ref('https://stadsarchiefamsterdam.memorix.io/resources/records/media/853c6e2f-3124-bd11-f84c-0f9b5f373cad/iiif/3/18920424/info.json')
+  
+
+   //const infoJsonUrl = ref(defaultIiifJsonUrl)
+
+
   //this is where the info.json is stored, @todo make types of different versions  
   const infoJson = ref({
     '@context':''
@@ -42,10 +56,19 @@ export const iiifImageStore = defineStore('iiifimage', () => {
 
   const loadIiifImageJson = debounce((url:string) => {
 
+    try {
+      new URL(url);
+    } catch (_) {
+       setMessage('Failed to load iiif. Is your url valid? ' + '(' + url + ')', 'error')
+       return false;  
+    }
+   
+
     infoJsonUrl.value = url
 
-    fetch(infoJsonUrl.value)
 
+
+    fetch(infoJsonUrl.value)
       .then((response) => {
         if (response.ok) {
           return response.json();
@@ -91,6 +114,7 @@ export const iiifImageStore = defineStore('iiifimage', () => {
     }
     qualities.value = ['default']
     preferedSizes.value = ['250,250']
+    formats.value = ['jpg']
   }
 
   function getInfoVersion() {
@@ -163,5 +187,5 @@ const getImageUrl = debounce(() => {
     });
   }
 
-  return { imageLoaded, maxWidth, maxHeight, iiifParams, infoJsonUrl, iiifImageUrl, qualities, loadIiifImageJson, message, messageType, preferedSizes, formats, copyImageUrl, getInfoVersion}
+  return { imageLoaded, maxWidth, maxHeight, iiifParams,infoJson, infoJsonUrl, iiifImageUrl, qualities, loadIiifImageJson, message, messageType, preferedSizes, formats, copyImageUrl, getInfoVersion}
 })
