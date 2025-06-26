@@ -6,19 +6,8 @@ import { isEmptyStatement } from 'typescript';
 
 export const iiifImageStore = defineStore('iiifimage', () => {
 
-   //const defaultIiifJsonUrl = 'https://images.memorix.nl/pdp/iiif/8c9832d2-785a-f652-ac68-49f6c9aacbb1/info.json'
 
-  // const router = useRouter()
-
-  // router.push({ name: 'home', params: { url: defaultIiifJsonUrl } })
-
-
-  const infoJsonUrl = ref('https://images.memorix.nl/pdp/iiif/8c9832d2-785a-f652-ac68-49f6c9aacbb1/info.json')
-  // //const infoJsonUrl = ref('https://stadsarchiefamsterdam.memorix.io/resources/records/media/853c6e2f-3124-bd11-f84c-0f9b5f373cad/iiif/3/18920424/info.json')
-
-
-   //const infoJsonUrl = ref(defaultIiifJsonUrl)
-
+  const infoJsonUrl = ref('https://images.memorix.nl/pic/iiif/6e9c8601-a376-29c8-bc82-a20177020e92/info.json')
 
   //this is where the info.json is stored, @todo make types of different versions  
   const infoJson = ref({
@@ -58,6 +47,10 @@ export const iiifImageStore = defineStore('iiifimage', () => {
   }
 
   const loadIiifImageJson = debounce((url:string) => {
+
+    if(url === '') {
+      url = infoJsonUrl.value
+    }
 
     try {
       new URL(url);
@@ -137,7 +130,7 @@ export const iiifImageStore = defineStore('iiifimage', () => {
           }
         }
 
-        setMessage('iiif image json loaded, detected version:' + version)
+        setMessage('iiif image json loaded, detected version: ' + version)
 
         getImageUrl()
     }).catch(error => {
