@@ -99,7 +99,7 @@ watch(
         <input 
           id="iiif-image-url" 
           v-model="iiifImage.infoJsonUrl" 
-          @input="event => iiifImage.loadIiifImageJson(event?.target?.value)" 
+          @input="(event: Event) => iiifImage.loadIiifImageJson((event.target as HTMLInputElement)?.value)" 
           placeholder="Enter IIIF image URL (info.json)" 
         />
       </div>
