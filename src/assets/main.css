@@ -1,5 +1,73 @@
 @import './base.css';
+
+/* Global responsive styles */
 body {
-    /*max-width: 1200px;*/
-    /*padding: 5px;*/
+    margin: 0;
+    padding: 0;
+    font-family: 'Inter', sans-serif;
+    line-height: 1.6;
+    color: var(--color-text);
+    background-color: var(--color-background);
+}
+
+/* Modern button styling */
+button {
+    background-color: #4a6baf;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    font-weight: 500;
+}
+
+button:hover {
+    background-color: #3a5a9f;
+}
+
+/* Modern form elements */
+input, select {
+    padding: 8px;
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    font-size: 14px;
+    transition: border-color 0.3s ease;
+}
+
+input:focus, select:focus {
+    outline: none;
+    border-color: #4a6baf;
+    box-shadow: 0 0 0 2px rgba(74, 107, 175, 0.2);
+}
+
+/* Link styling */
+a {
+    color: #4a6baf;
+    text-decoration: none;
+    margin-right: 15px;
+    transition: color 0.3s ease;
+}
+
+a:hover {
+    color: #3a5a9f;
+    text-decoration: underline;
+}
+
+/* Responsive container */
+.wrapper {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* Media queries for responsive design */
+@media (max-width: 768px) {
+    body {
+        font-size: 14px;
+    }
+
+    .wrapper {
+        padding: 0 10px;
+    }
 }
