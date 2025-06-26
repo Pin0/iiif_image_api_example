@@ -10,6 +10,7 @@ export default defineConfig({
     vue(),
     vueJsx(),
   ],
+  base: process.env.NODE_ENV === 'production' ? '/iiif_image_api_example/' : '/',
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
