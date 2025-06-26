@@ -5,7 +5,7 @@ import { useRouter } from 'vue-router';
 import { isEmptyStatement } from 'typescript';
 
 export const iiifImageStore = defineStore('iiifimage', () => {
-  
+
    //const defaultIiifJsonUrl = 'https://images.memorix.nl/pdp/iiif/8c9832d2-785a-f652-ac68-49f6c9aacbb1/info.json'
 
   // const router = useRouter()
@@ -15,7 +15,7 @@ export const iiifImageStore = defineStore('iiifimage', () => {
 
   const infoJsonUrl = ref('https://images.memorix.nl/pdp/iiif/8c9832d2-785a-f652-ac68-49f6c9aacbb1/info.json')
   // //const infoJsonUrl = ref('https://stadsarchiefamsterdam.memorix.io/resources/records/media/853c6e2f-3124-bd11-f84c-0f9b5f373cad/iiif/3/18920424/info.json')
-  
+
 
    //const infoJsonUrl = ref(defaultIiifJsonUrl)
 
@@ -28,10 +28,13 @@ export const iiifImageStore = defineStore('iiifimage', () => {
   const iiifImageUrl = ref('')
   const maxWidth = ref(0)
   const maxHeight= ref(0)
+  const supportsRotationBy90sOnly = ref(false)
 
   const iiifParams = reactive({
     region: 'full',
     size: '250,250',
+    width: 250,
+    height: 250,
     rotation: '0',
     quality: 'default',
     format: 'jpg',
@@ -62,7 +65,7 @@ export const iiifImageStore = defineStore('iiifimage', () => {
        setMessage('Failed to load iiif. Is your url valid? ' + '(' + url + ')', 'error')
        return false;  
     }
-   
+
 
     infoJsonUrl.value = url
 
@@ -78,9 +81,12 @@ export const iiifImageStore = defineStore('iiifimage', () => {
       }).then(data => {
         reset()
         infoJson.value = data
+        // Handle qualities
         if(data.extraQualities && data.extraQualities.length > 0) {
           qualities.value = qualities.value.concat(data.extraQualities)
         }
+
+        // Handle sizes
         if(data.sizes && data.sizes.length > 0) {
           data.sizes.forEach(function(value:any) {
             const sizeOption:string = value.width + ',' + value.height
@@ -88,9 +94,12 @@ export const iiifImageStore = defineStore('iiifimage', () => {
             preferedSizes.value.indexOf(sizeOption) === -1 ? preferedSizes.value.push(sizeOption) : false
           })
         }
+
+        // Handle formats
         if(data.extraFormats && data.extraFormats.length > 0) {
           formats.value = formats.value.concat(data.extraFormats)
         }
+
         if(data.width) {
           maxWidth.value = data.width
         }
@@ -98,7 +107,37 @@ export const iiifImageStore = defineStore('iiifimage', () => {
           maxHeight.value = data.height
         }
 
-        setMessage('iiif image json loaded, detected version:' + getInfoVersion())
+        // Check for version-specific features
+        const version = getInfoVersion()
+        if (version === '3.0') {
+          // For IIIF 3.0, check extraFeatures
+          if (data.extraFeatures) {
+            const hasRotationBy90s = data.extraFeatures.includes('rotationBy90s')
+            const hasRotationArbitrary = data.extraFeatures.includes('rotationArbitrary')
+            supportsRotationBy90sOnly.value = hasRotationBy90s && !hasRotationArbitrary
+          }
+        } else if (version === '2.0') {
+          // For IIIF 2.0, check profile array
+          if (Array.isArray(data.profile) && data.profile.length > 1 && typeof data.profile[1] === 'object') {
+            // Check rotation features
+            const features = data.profile[1].supports || []
+            const hasRotationBy90s = features.includes('rotationBy90s')
+            const hasRotationArbitrary = features.includes('rotationArbitrary')
+            supportsRotationBy90sOnly.value = hasRotationBy90s && !hasRotationArbitrary
+
+            // Extract qualities from profile
+            if (data.profile[1].qualities && Array.isArray(data.profile[1].qualities)) {
+              qualities.value = data.profile[1].qualities
+            }
+
+            // Extract formats from profile
+            if (data.profile[1].formats && Array.isArray(data.profile[1].formats)) {
+              formats.value = data.profile[1].formats
+            }
+          }
+        }
+
+        setMessage('iiif image json loaded, detected version:' + version)
 
         getImageUrl()
     }).catch(error => {
@@ -115,6 +154,17 @@ export const iiifImageStore = defineStore('iiifimage', () => {
     qualities.value = ['default']
     preferedSizes.value = ['250,250']
     formats.value = ['jpg']
+    supportsRotationBy90sOnly.value = false
+
+    // Reset all iiifParams to their default values
+    iiifParams.region = 'full'
+    iiifParams.size = '250,250'
+    iiifParams.width = 250
+    iiifParams.height = 250
+    iiifParams.rotation = '0'
+    iiifParams.quality = 'default'
+    iiifParams.format = 'jpg'
+    iiifParams.maintainAspectRatio = true
   }
 
   function getInfoVersion() {
@@ -142,7 +192,29 @@ export const iiifImageStore = defineStore('iiifimage', () => {
     return version
   }
 
+  // Watch for changes to iiifParams.size and update width and height
+  watch(() => iiifParams.size, (newSize) => {
+    const sizeParts = newSize.split(',')
+    if (sizeParts.length === 2) {
+      iiifParams.width = parseInt(sizeParts[0])
+      iiifParams.height = parseInt(sizeParts[1])
+    }
+  })
+
+  // Watch for changes to width and height and update size
+  watch([() => iiifParams.width, () => iiifParams.height], ([newWidth, newHeight]) => {
+    iiifParams.size = `${newWidth},${newHeight}`
+  })
+
   watch(iiifParams, () => {
+    // If the image only supports rotation by 90s, round the rotation value to the nearest 90 degrees
+    if (supportsRotationBy90sOnly.value) {
+      const rotation = parseInt(iiifParams.rotation)
+      const roundedRotation = Math.round(rotation / 90) * 90
+      if (rotation !== roundedRotation) {
+        iiifParams.rotation = roundedRotation.toString()
+      }
+    }
     getImageUrl()
   })
 
@@ -187,5 +259,5 @@ const getImageUrl = debounce(() => {
     });
   }
 
-  return { imageLoaded, maxWidth, maxHeight, iiifParams,infoJson, infoJsonUrl, iiifImageUrl, qualities, loadIiifImageJson, message, messageType, preferedSizes, formats, copyImageUrl, getInfoVersion}
+  return { imageLoaded, maxWidth, maxHeight, iiifParams, infoJson, infoJsonUrl, iiifImageUrl, qualities, loadIiifImageJson, message, messageType, preferedSizes, formats, copyImageUrl, getInfoVersion, supportsRotationBy90sOnly }
 })
