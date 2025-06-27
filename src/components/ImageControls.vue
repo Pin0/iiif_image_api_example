@@ -8,7 +8,10 @@ const iiifImage = iiifImageStore();
   <div class="settings">
     <div class="setting">
       <h3>Region</h3>
-      <input v-model="iiifImage.iiifParams.region" name="region" autocomplete="region" placeholder="full, square, or x,y,w,h">
+      <select v-model="iiifImage.iiifParams.region" name="region">
+        <option value="full">full</option>
+        <option value="square">square</option>
+      </select>
     </div>
     <div class="setting size">
       <h3>Size</h3>
